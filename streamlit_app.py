@@ -25,34 +25,25 @@ def process_image(image):
     epsilon = 0.02 * cv2.arcLength(largest_contour, True)
     approx = cv2.approxPolyDP(largest_contour, epsilon, True)
     
-    # Extract the Sudoku grid from the image
+    # Check if we have four corners (for a valid Sudoku grid)
     if len(approx) == 4:
-        points = np.float32([point[0] for point in approx])
+        # Extract points from the contour (ensure they are in the correct order)
+        points = np.array([point[0] for point in approx], dtype="float32")
+        
+        # Order the points in the order: top-left, top-right, bottom-left, bottom-right
         points = sorted(points, key=lambda x: (x[1], x[0]))
         top_left, top_right, bottom_left, bottom_right = points
         
+        # Create destination points for the top-down view of the Sudoku puzzle
+        width = height = 450  # Fixed size for Sudoku grid
+        dst = np.array([[0, 0], [width, 0], [0, height], [width, height]], dtype="float32")
+        
         # Warp the perspective to get a top-down view of the Sudoku puzzle
-        width = height = 450  # Dimensions for the new perspective
-        dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
-        matrix = cv2.getPerspectiveTransform(points, dst)
+        matrix = cv2.getPerspectiveTransform(points, dst)  # Perspective transform matrix
         warped = cv2.warpPerspective(image, matrix, (width, height))
         
-        # Split the warped image into a 9x9 grid
-        cell_size = width // 9
-        grid = np.zeros((9, 9), dtype=int)
-        for i in range(9):
-            for j in range(9):
-                x, y = j * cell_size, i * cell_size
-                cell = warped[y:y + cell_size, x:x + cell_size]
-                cell_gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
-                digit = pytesseract.image_to_string(cell_gray, config='--psm 10 digits')
-                
-                # If a digit is detected, place it in the grid
-                try:
-                    grid[i, j] = int(digit)
-                except ValueError:
-                    grid[i, j] = 0  # Empty cell
-        return grid
+        # Return the warped image to be processed into a 9x9 grid
+        return warped
     return None
 
 # Streamlit App
