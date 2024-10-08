@@ -19,31 +19,38 @@ def process_image(image):
     
     # Find contours to detect the largest square (the Sudoku puzzle)
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    largest_contour = max(contours, key=cv2.contourArea)
     
-    # Approximate the contour to a polygon
-    epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-    approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
     
-    # Check if we have four corners (for a valid Sudoku grid)
-    if len(approx) == 4:
-        # Extract points from the contour (ensure they are in the correct order)
-        points = np.array([point[0] for point in approx], dtype="float32")
+        # Approximate the contour to a polygon
+        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
+        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
         
-        # Order the points in the order: top-left, top-right, bottom-left, bottom-right
-        points = sorted(points, key=lambda x: (x[1], x[0]))
-        top_left, top_right, bottom_left, bottom_right = points
-        
-        # Create destination points for the top-down view of the Sudoku puzzle
-        width = height = 450  # Fixed size for Sudoku grid
-        dst = np.array([[0, 0], [width, 0], [0, height], [width, height]], dtype="float32")
-        
-        # Warp the perspective to get a top-down view of the Sudoku puzzle
-        matrix = cv2.getPerspectiveTransform(points, dst)  # Perspective transform matrix
-        warped = cv2.warpPerspective(image, matrix, (width, height))
-        
-        # Return the warped image to be processed into a 9x9 grid
-        return warped
+        # Check if we have four corners (for a valid Sudoku grid)
+        if len(approx) == 4:
+            # Extract points from the contour
+            points = np.array([point[0] for point in approx], dtype="float32")
+            print("Extracted Points:", points)  # Debugging statement
+            
+            # Order the points: top-left, top-right, bottom-right, bottom-left
+            top_left = points[np.argmin(points.sum(axis=1))]
+            bottom_right = points[np.argmax(points.sum(axis=1))]
+            top_right = points[np.argmin(np.diff(points, axis=1))]
+            bottom_left = points[np.argmax(np.diff(points, axis=1))]
+            
+            ordered_points = np.array([top_left, top_right, bottom_right, bottom_left], dtype="float32")
+            print("Ordered Points:", ordered_points)  # Debugging statement
+            
+            # Create destination points for the top-down view of the Sudoku puzzle
+            width = height = 450  # Fixed size for Sudoku grid
+            dst = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype="float32")
+            
+            # Warp the perspective to get a top-down view of the Sudoku puzzle
+            matrix = cv2.getPerspectiveTransform(ordered_points, dst)  # Perspective transform matrix
+            warped = cv2.warpPerspective(image, matrix, (width, height))
+            
+            return warped
     return None
 
 # Streamlit App
