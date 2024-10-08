@@ -1,6 +1,5 @@
 import streamlit as st
 import cv2
-import pytesseract
 import numpy as np
 from PIL import Image
 
@@ -10,50 +9,11 @@ def display_sudoku_grid(grid):
     for row in grid:
         st.write(row)
 
-# Backtracking algorithm to solve the Sudoku puzzle
-def is_valid(board, row, col, num):
-    for i in range(9):
-        if board[row][i] == num or board[i][col] == num:
-            return False
-    start_row, start_col = 3 * (row // 3), 3 * (col // 3)
-    for i in range(3):
-        for j in range(3):
-            if board[start_row + i][start_col + j] == num:
-                return False
-    return True
-
-def solve_sudoku(board):
-    for row in range(9):
-        for col in range(9):
-            if board[row][col] == 0:
-                for num in range(1, 10):
-                    if is_valid(board, row, col, num):
-                        board[row][col] = num
-                        if solve_sudoku(board):
-                            return True
-                        board[row][col] = 0
-                return False
-    return True
-
 # Function to process the uploaded image and extract the Sudoku grid
 def process_image(image):
-    # Load the uploaded image using PIL and convert it to RGB if necessary
-    uploaded_image = st.file_uploader("Upload a Sudoku puzzle image", type=["jpg", "png", "jpeg"])
-    
-    if uploaded_image is not None:
-        # Open the image using PIL
-        image = Image.open(uploaded_image)
-        
-        # Convert the image to RGB (3 channels) if it has fewer channels
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
-        # Convert the PIL image to a NumPy array (which OpenCV can process)
-        image = np.array(image)
-
-    # Now you can proceed with OpenCV operations (e.g., grayscale conversion)
+    # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-   
+    
     # Use adaptive thresholding to binarize the image
     thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
     
@@ -102,7 +62,15 @@ st.title("Sudoku Solver")
 uploaded_image = st.file_uploader("Upload a Sudoku puzzle image", type=["jpg", "png", "jpeg"])
 
 if uploaded_image is not None:
-    image = np.array(Image.open(uploaded_image))
+    # Open the image using PIL
+    image = Image.open(uploaded_image)
+    
+    # Convert the image to RGB if it's not already in RGB mode
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    
+    # Convert the PIL image to a NumPy array (for OpenCV)
+    image = np.array(image)
 
     # Process the image to extract the Sudoku grid
     grid = process_image(image)
