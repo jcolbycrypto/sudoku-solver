@@ -2,3 +2,4 @@ streamlit
 opencv-python 
 pytesseract 
 Pillow
+cv2
