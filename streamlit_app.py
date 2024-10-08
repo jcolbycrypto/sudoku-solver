@@ -3,6 +3,8 @@ import cv2
 import pytesseract
 import numpy as np
 from PIL import Image
+import requests
+from io import BytesIO
 
 # Function to display the Sudoku grid
 def display_sudoku_grid(grid):
@@ -81,15 +83,39 @@ def process_image(image):
         return grid
     return None
 
+# Function to load image from a URL
+def load_image_from_url(url):
+    try:
+        response = requests.get(url)
+        img = Image.open(BytesIO(response.content))
+        return np.array(img)
+    except Exception as e:
+        st.error(f"Error loading image from URL: {e}")
+        return None
+
 # Streamlit App
 st.title("Sudoku Solver")
 
-# Upload the Sudoku puzzle image
-uploaded_image = st.file_uploader("Upload a Sudoku puzzle image", type=["jpg", "png", "jpeg"])
+# Option to select image source
+source = st.radio("Select image source", ("Upload Image", "Enter URL"))
 
-if uploaded_image is not None:
-    image = np.array(Image.open(uploaded_image))
+if source == "Upload Image":
+    # Upload the Sudoku puzzle image
+    uploaded_image = st.file_uploader("Upload a Sudoku puzzle image", type=["jpg", "png", "jpeg"])
 
+    if uploaded_image is not None:
+        image = np.array(Image.open(uploaded_image))
+elif source == "Enter URL":
+    # Enter the image URL
+    image_url = st.text_input("Enter image URL")
+
+    if image_url:
+        image = load_image_from_url(image_url)
+else:
+    image = None
+
+# If an image is available, process it
+if image is not None:
     # Process the image to extract the Sudoku grid
     grid = process_image(image)
     
