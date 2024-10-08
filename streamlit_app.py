@@ -31,7 +31,7 @@ def process_image(image):
         if len(approx) == 4:
             # Extract points from the contour
             points = np.array([point[0] for point in approx], dtype="float32")
-            print("Extracted Points:", points)  # Debugging statement
+            #print("Extracted Points:", points)  # Debugging statement
             
             # Order the points: top-left, top-right, bottom-right, bottom-left
             top_left = points[np.argmin(points.sum(axis=1))]
@@ -40,7 +40,7 @@ def process_image(image):
             bottom_left = points[np.argmax(np.diff(points, axis=1))]
             
             ordered_points = np.array([top_left, top_right, bottom_right, bottom_left], dtype="float32")
-            print("Ordered Points:", ordered_points)  # Debugging statement
+            #print("Ordered Points:", ordered_points)  # Debugging statement
             
             # Create destination points for the top-down view of the Sudoku puzzle
             width = height = 450  # Fixed size for Sudoku grid
