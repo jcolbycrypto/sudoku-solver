@@ -115,7 +115,7 @@ else:
     image = None
 
 # If an image is available, process it
-if image is not None:
+if image:
     # Process the image to extract the Sudoku grid
     grid = process_image(image)
     
